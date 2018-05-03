@@ -20,7 +20,6 @@ object dtwOdsWifiMotherBabyD {
 
     //读取hdfs数据
     val df=spark.read.json("/midware/fs/wifi/20180428/muying.json")
-  //    val df: DataFrame =spark.read.json("hdfs://localhost:8020/muying_bak.json")
    // df.printSchema()
     val outDF= df.select(df("id"),df("mmac"),df("rate"),df("time"),df("lat"),df("lon"))
     outDF.createOrReplaceTempView("outTable")
@@ -46,15 +45,17 @@ object dtwOdsWifiMotherBabyD {
 //      """.stripMargin)
     result.createOrReplaceTempView("res")
    // spark.sql("select time from res").show()
-    result.write.saveAsTable("res")
-      spark.table("res").show(20)
+    result.write.saveAsTable("result")
+
+    spark.table("result").show(20)
 
     //读取临时表的数据，存到mysql对应表中
       val props=new Properties()
         val url = "jdbc:mysql://101.37.119.8:3306/data"
         props.put("user","data")
-        props.put("pwd","data@gR8")
-        result.write.jdbc(url,"wifi_data_muying",props)
+        props.put("password","data@gR8")
+        props.put("driver", "com.mysql.jdbc.Driver")
+        result.write.mode("overwrite").jdbc(url,"wifi_data_muying",props)
 
   }
 
