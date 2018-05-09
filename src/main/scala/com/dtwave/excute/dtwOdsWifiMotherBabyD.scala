@@ -19,46 +19,41 @@ object dtwOdsWifiMotherBabyD {
       .getOrCreate()
 
     //读取hdfs数据
-    val df=spark.read.json("/midware/fs/wifi/20180428/muying.json")
-   // df.printSchema()
-    val outDF= df.select(df("id"),df("mmac"),df("rate"),df("time"),df("lat"),df("lon"))
-    outDF.createOrReplaceTempView("outTable")
+    val df = spark.read.json("/midware/fs/wifi/20180428/muying.json")
+    // df.printSchema()
+    val outDF = df.select(df("id"), df("mmac"), df("rate"), df("time"), df("lat"), df("lon"))
+    // outDF.createOrReplaceTempView("outTable")
     //outDF.write.saveAsTable("out_table")
-    val tempInner=df.select(explode(df("data"))).toDF("data")
-    val innerDF=tempInner.select(
-      "data.mac","data.rssi","data.rssi1", "data.rssi2", "data.rssi3","data.tmc","data.ts",
-      "data.router", "data.range","data.tc","data.ds")
-      .toDF("data_mac","data_rssi","data_rssi1", "data_rssi2", "data_rssi3","data_tmc",
-        "data_ts", "data_router", "data_range","data_tc","data_ds")
+    val tempInner = df.select(explode(df("data"))).toDF("data")
+    val innerDF = tempInner.select(
+      "data.mac", "data.rssi", "data.rssi1", "data.rssi2", "data.rssi3", "data.tmc", "data.ts",
+      "data.router", "data.range", "data.tc", "data.ds")
+      .toDF("data_mac", "data_rssi", "data_rssi1", "data_rssi2", "data_rssi3", "data_tmc",
+        "data_ts", "data_router", "data_range", "data_tc", "data_ds")
     //innerDF.show()
-    innerDF.createOrReplaceTempView("inTable")
-    val result=innerDF.join(outDF).distinct()
-//    val result=spark.sql(
-//      """create table res
-//        |as
-//        |select
-//        |outTable.id,inTable.data_mac,inTable.data_rssi,inTable.data_rssi1,inTable.data_rssi2,
-//        |inTable.data_tmc,inTable.data_router,inTable.data_range,outTable.mmac,outTable.rate,
-//        |outTable.time,outTable.lat,outTable.lon,inTable.data_ts,inTable.data_ds,inTable.data_rssi3,
-//        |inTable.data_tc
-//        |from inTable,outTable
-//      """.stripMargin)
+    // innerDF.createOrReplaceTempView("inTable")
+    val result = innerDF.join(outDF).distinct()
+    //    val result=spark.sql(
+    //      """create table res
+    //        |as
+    //        |select
+    //        |outTable.id,inTable.data_mac,inTable.data_rssi,inTable.data_rssi1,inTable.data_rssi2,
+    //        |inTable.data_tmc,inTable.data_router,inTable.data_range,outTable.mmac,outTable.rate,
+    //        |outTable.time,outTable.lat,outTable.lon,inTable.data_ts,inTable.data_ds,inTable.data_rssi3,
+    //        |inTable.data_tc
+    //        |from inTable,outTable
+    //      """.stripMargin)
     result.createOrReplaceTempView("res")
-   // spark.sql("select time from res").show()
-    result.write.saveAsTable("result")
-
-    spark.table("result").show(20)
-
-    //读取临时表的数据，存到mysql对应表中
-      val props=new Properties()
-        val url = "jdbc:mysql://101.37.119.8:3306/data"
-        props.put("user","data")
-        props.put("password","data@gR8")
-        props.put("driver", "com.mysql.jdbc.Driver")
-        result.write.mode("overwrite").jdbc(url,"wifi_data_muying",props)
-
+    // spark.sql("select time from res").show()
+    //    result.write.saveAsTable("yaojiaohui")
+    //
+    //    spark.table("yaojiaohui").show(40)
+    //存到mysql对应表中
+    val props = new Properties()
+    val url = "jdbc:mysql://101.37.119.8:3306/data"
+    props.put("user", "data")
+    props.put("password", "data@gR8")
+    props.put("driver", "com.mysql.jdbc.Driver")
+    result.write.mode("overwrite").jdbc(url, "wifi_data_muying", props)
   }
-
-
-
 }
